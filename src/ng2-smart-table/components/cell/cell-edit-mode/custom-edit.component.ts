@@ -5,8 +5,7 @@ import {
   ViewContainerRef,
   SimpleChanges,
   OnChanges,
-  OnDestroy,
-} from '@angular/core';
+  OnDestroy } from '@angular/core';
 
 import { EditCellDefault } from './edit-cell-default';
 import { Cell } from '../../../lib/data-set/cell';
@@ -14,33 +13,33 @@ import { Cell } from '../../../lib/data-set/cell';
 @Component({
   selector: 'table-cell-custom-editor',
   template: `
-    <ng-template #dynamicTarget></ng-template>
+    <template #dynamicTarget></template>
   `,
 })
-export class CustomEditComponent extends EditCellDefault implements OnChanges, OnDestroy {
+export class CustomEditComponent extends EditCellDefault implements OnChanges {
 
   customComponent: any;
-  @ViewChild('dynamicTarget', { read: ViewContainerRef }) dynamicTarget: any;
+  @ViewChild('dynamicTarget', {read: ViewContainerRef}) dynamicTarget: any;
 
   constructor(private resolver: ComponentFactoryResolver) {
     super();
   }
 
-  ngOnChanges(changes: SimpleChanges) {
-    if (this.cell && !this.customComponent) {
-      const componentFactory = this.resolver.resolveComponentFactory(this.cell.getColumn().editor.component);
+  ngOnChanges(changes: SimpleChanges): void {
+    if (this.cell && !this.customComponent){
+      let componentFactory = this.resolver.resolveComponentFactory(this.cell.getColumn().editor.component);
       this.customComponent = this.dynamicTarget.createComponent(componentFactory);
 
       // set @Inputs and @Outputs of custom component
       this.customComponent.instance.cell = this.cell;
       this.customComponent.instance.inputClass = this.inputClass;
       this.customComponent.instance.onStopEditing.subscribe(() => this.onStopEditing());
-      this.customComponent.instance.onEdited.subscribe((event: any) => this.onEdited(event));
-      this.customComponent.instance.onClick.subscribe((event: any) => this.onClick(event));
+      this.customComponent.instance.onEdited.subscribe((event) => this.onEdited(event));
+      this.customComponent.instance.onClick.subscribe((event) => this.onClick(event));
     }
   }
 
-  ngOnDestroy() {
+  ngOnDestroy(): void {
     if (this.customComponent) {
       this.customComponent.destroy();
     }

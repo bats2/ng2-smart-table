@@ -9,7 +9,7 @@ export class EditCellDefault {
 
   @Output() edited = new EventEmitter<any>();
 
-  onEdited(event: any): boolean {
+  onEdited(event): boolean {
     this.edited.next(event);
     return false;
   }
@@ -19,7 +19,7 @@ export class EditCellDefault {
     return false;
   }
 
-  onClick(event: any) {
+  onClick(event): void {
     event.stopPropagation();
   }
 }

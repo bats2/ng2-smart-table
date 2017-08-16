@@ -1,42 +1,38 @@
-import { Component, Input, Output, SimpleChange, EventEmitter, OnChanges } from '@angular/core';
+import {
+  Component, Input, Output, SimpleChange, EventEmitter,
+  OnChanges
+} from '@angular/core';
 
 import { Grid } from './lib/grid';
 import { DataSource } from './lib/data-source/data-source';
 import { Row } from './lib/data-set/row';
+
 import { deepExtend } from './lib/helpers';
 import { LocalDataSource } from './lib/data-source/local/local.data-source';
 
 @Component({
   selector: 'ng2-smart-table',
-  styleUrls: ['./ng2-smart-table.component.scss'],
-  templateUrl: './ng2-smart-table.component.html',
+  styleUrls: ['ng2-smart-table.scss'],
+  templateUrl: 'ng2-smart-table.html',
 })
 export class Ng2SmartTableComponent implements OnChanges {
 
   @Input() source: any;
   @Input() settings: Object = {};
 
-  @Output() rowSelect = new EventEmitter<any>();
-  @Output() userRowSelect = new EventEmitter<any>();
-  @Output() delete = new EventEmitter<any>();
-  @Output() edit = new EventEmitter<any>();
-  @Output() create = new EventEmitter<any>();
-  @Output() custom = new EventEmitter<any>();
-  @Output() deleteConfirm = new EventEmitter<any>();
-  @Output() editConfirm = new EventEmitter<any>();
-  @Output() createConfirm = new EventEmitter<any>();
-  @Output() rowHover: EventEmitter<any> = new EventEmitter<any>();
+  @Output() public rowSelect: EventEmitter<any> = new EventEmitter<any>();
+  @Output() public userRowSelect: EventEmitter<any> = new EventEmitter<any>();
+  @Output() public delete: EventEmitter<any> = new EventEmitter<any>();
+  @Output() public edit: EventEmitter<any> = new EventEmitter<any>();
+  @Output() public create: EventEmitter<any> = new EventEmitter<any>();
 
-  tableClass: string;
-  tableId: string;
-  isHideHeader: boolean;
-  isHideSubHeader: boolean;
-  isPagerDisplay: boolean;
-  rowClassFunction: Function;
-
+  @Output() public deleteConfirm: EventEmitter<any> = new EventEmitter<any>();
+  @Output() public editConfirm: EventEmitter<any> = new EventEmitter<any>();
+  @Output() public createConfirm: EventEmitter<any> = new EventEmitter<any>();
 
   grid: Grid;
   defaultSettings: Object = {
+
     mode: 'inline', // inline|external|click-to-edit
     selectMode: 'single', // single|multi
     hideHeader: false,
@@ -46,8 +42,7 @@ export class Ng2SmartTableComponent implements OnChanges {
       add: true,
       edit: true,
       delete: true,
-      custom: [],
-      position: 'left', // left|right
+      position: 'left' // left|right
     },
     filter: {
       inputClass: '',
@@ -57,18 +52,18 @@ export class Ng2SmartTableComponent implements OnChanges {
       editButtonContent: 'Edit',
       saveButtonContent: 'Update',
       cancelButtonContent: 'Cancel',
-      confirmSave: false,
+      confirmSave: false
     },
     add: {
       inputClass: '',
       addButtonContent: 'Add New',
       createButtonContent: 'Create',
       cancelButtonContent: 'Cancel',
-      confirmCreate: false,
+      confirmCreate: false
     },
     delete: {
       deleteButtonContent: 'Delete',
-      confirmDelete: false,
+      confirmDelete: false
     },
     attr: {
       id: '',
@@ -78,80 +73,143 @@ export class Ng2SmartTableComponent implements OnChanges {
     columns: {},
     pager: {
       display: true,
-      perPage: 10,
-    },
-    rowClassFunction: () => ""
+      perPage: 10
+    }
   };
 
   isAllSelected: boolean = false;
 
-  ngOnChanges(changes: { [propertyName: string]: SimpleChange }) {
+  ngOnChanges(changes: { [propertyName: string]: SimpleChange }): void {
     if (this.grid) {
       if (changes['settings']) {
         this.grid.setSettings(this.prepareSettings());
       }
       if (changes['source']) {
-        this.source = this.prepareSource();
         this.grid.setSource(this.source);
       }
     } else {
       this.initGrid();
     }
-    this.tableId = this.grid.getSetting('attr.id');
-    this.tableClass = this.grid.getSetting('attr.class');
-    this.isHideHeader = this.grid.getSetting('hideHeader');
-    this.isHideSubHeader = this.grid.getSetting('hideSubHeader');
-    this.isPagerDisplay = this.grid.getSetting('pager.display');
-    this.rowClassFunction = this.grid.getSetting('rowClassFunction');
   }
 
-  editRowSelect(row: Row) {
+  onAdd(event): boolean {
+    event.stopPropagation();
+    if (this.grid.getSetting('mode') === 'external') {
+      this.create.emit({
+        source: this.source
+      });
+    } else {
+      this.grid.createFormShown = true;
+    }
+    return false;
+  }
+
+  onUserSelectRow(row: Row): void {
+    if (this.grid.getSetting('selectMode') !== 'multi') {
+      this.grid.selectRow(row);
+      this._onUserSelectRow(row.getData());
+      this.onSelectRow(row);
+    }
+  }
+
+  private _onUserSelectRow(data: any, selected: Array<any> = []) {
+    this.userRowSelect.emit({
+      data: data || null,
+      source: this.source,
+      selected: selected.length ? selected : this.grid.getSelectedRows(),
+    });
+  }
+
+  multipleSelectRow(row) {
+    this.grid.multipleSelectRow(row);
+    this._onUserSelectRow(row.getData());
+    this._onSelectRow(row.getData());
+  }
+
+  selectAllRows() {
+    this.isAllSelected = !this.isAllSelected;
+    this.grid.selectAllRows(this.isAllSelected);
+    let selectedRows = this.grid.getSelectedRows();
+
+    this._onUserSelectRow(selectedRows[0], selectedRows);
+    this._onSelectRow(selectedRows[0]);
+  }
+
+  onSelectRow(row: Row): void {
+    this.grid.selectRow(row);
+    this._onSelectRow(row.getData());
+  }
+
+  onMultipleSelectRow(row: Row): void {
+    this._onSelectRow(row.getData());
+  }
+
+  private _onSelectRow(data: any) {
+    this.rowSelect.emit({
+      data: data || null,
+      source: this.source,
+    });
+  }
+
+  onEdit(row: Row, event): boolean {
+    event.stopPropagation();
+
     if (this.grid.getSetting('selectMode') === 'multi') {
       this.onMultipleSelectRow(row);
     } else {
       this.onSelectRow(row);
     }
-  }
 
-  onUserSelectRow(row: Row) {
-    if (this.grid.getSetting('selectMode') !== 'multi') {
-      this.grid.selectRow(row);
-      this.emitUserSelectRow(row);
-      this.emitSelectRow(row);
+    if (this.grid.getSetting('mode') === 'external') {
+      this.edit.emit({
+        data: row.getData(),
+        source: this.source
+      });
+    } else {
+      this.grid.edit(row);
     }
+    return false;
   }
 
-  onRowHover(row: Row) {
-    this.rowHover.emit(row);
+  onDelete(row: Row, event): boolean {
+    event.stopPropagation();
+
+    if (this.grid.getSetting('mode') === 'external') {
+      this.delete.emit({
+        data: row.getData(),
+        source: this.source
+      });
+    } else {
+      this.grid.delete(row, this.deleteConfirm);
+    }
+    return false;
   }
 
-  multipleSelectRow(row: Row) {
-    this.grid.multipleSelectRow(row);
-    this.emitUserSelectRow(row);
-    this.emitSelectRow(row);
+  onCreate(row: Row, event): boolean {
+    event.stopPropagation();
+
+    this.grid.create(row, this.createConfirm);
+    return false;
   }
 
-  onSelectAllRows($event: any) {
-    this.isAllSelected = !this.isAllSelected;
-    this.grid.selectAllRows(this.isAllSelected);
+  onSave(row: Row, event): boolean {
+    event.stopPropagation();
 
-    this.emitUserSelectRow(null);
-    this.emitSelectRow(null);
+    this.grid.save(row, this.editConfirm);
+    return false;
   }
 
-  onSelectRow(row: Row) {
-    this.grid.selectRow(row);
-    this.emitSelectRow(row);
+  onCancelEdit(row, event): boolean {
+    event.stopPropagation();
+
+    row.isInEditing = false;
+    return false;
   }
 
-  onMultipleSelectRow(row: Row) {
-    this.emitSelectRow(row);
-  }
-
-  initGrid() {
+  initGrid(): void {
     this.source = this.prepareSource();
     this.grid = new Grid(this.source, this.prepareSettings());
-    this.grid.onSelectRow().subscribe((row) => this.emitSelectRow(row));
+    this.grid.onSelectRow().subscribe((row) => this.onSelectRow(row));
   }
 
   prepareSource(): DataSource {
@@ -168,39 +226,19 @@ export class Ng2SmartTableComponent implements OnChanges {
     return deepExtend({}, this.defaultSettings, this.settings);
   }
 
-  changePage($event: any) {
+  changePage($event) {
     this.resetAllSelector();
   }
 
-  sort($event: any) {
+  sort($event) {
     this.resetAllSelector();
   }
 
-  filter($event: any) {
+  filter($event) {
     this.resetAllSelector();
   }
 
   private resetAllSelector() {
     this.isAllSelected = false;
   }
-
-  private emitUserSelectRow(row: Row) {
-    const selectedRows = this.grid.getSelectedRows();
-
-    this.userRowSelect.emit({
-      data: row ? row.getData() : null,
-      isSelected: row ? row.getIsSelected() : null,
-      source: this.source,
-      selected: selectedRows && selectedRows.length ? selectedRows.map((r: Row) => r.getData()) : [],
-    });
-  }
-
-  private emitSelectRow(row: Row) {
-    this.rowSelect.emit({
-      data: row ? row.getData() : null,
-      isSelected: row ? row.getIsSelected() : null,
-      source: this.source,
-    });
-  }
-
 }

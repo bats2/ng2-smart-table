@@ -3,7 +3,7 @@ import { Column } from './column';
 
 export class DataSet {
 
-  newRow: Row;
+  public newRow: Row;
 
   protected data: Array<any> = [];
   protected columns: Array<Column> = [];
@@ -18,7 +18,7 @@ export class DataSet {
     this.createNewRow();
   }
 
-  setData(data: Array<any>) {
+  setData(data: Array<any>): void {
     this.data = data;
     this.createRows();
   }
@@ -31,29 +31,20 @@ export class DataSet {
     return this.rows;
   }
 
-  getFirstRow(): Row {
-    return this.rows[0];
-  }
-
-  getLastRow(): Row {
-    return this.rows[this.rows.length - 1];
-  }
-
-  findRowByData(data: any): Row {
+  findRowByData(data): Row {
     return this.rows.find((row: Row) => row.getData() === data);
   }
 
-  deselectAll() {
+  deselectAll(): void {
     this.rows.forEach((row) => {
       row.isSelected = false;
     });
   }
 
   selectRow(row: Row): Row {
-    const previousIsSelected = row.isSelected;
     this.deselectAll();
 
-    row.isSelected = !previousIsSelected;
+    row.isSelected = true;
     this.selectedRow = row;
 
     return this.selectedRow;
@@ -91,11 +82,11 @@ export class DataSet {
     }
   }
 
-  willSelectFirstRow() {
+  willSelectFirstRow(): void {
     this.willSelect = 'first';
   }
 
-  willSelectLastRow() {
+  willSelectLastRow(): void {
     this.willSelect = 'last';
   }
 
@@ -118,8 +109,8 @@ export class DataSet {
     return this.selectedRow;
   }
 
-  createNewRow() {
-    this.newRow = new Row(-1, {}, this);
+  createNewRow(): void {
+    this.newRow = new Row(0, {}, this);
     this.newRow.isInEditing = true;
   }
 
@@ -128,8 +119,8 @@ export class DataSet {
    * @param settings
    * @private
    */
-  createColumns(settings: any) {
-    for (const id in settings) {
+  createColumns(settings) {
+    for (let id in settings) {
       if (settings.hasOwnProperty(id)) {
         this.columns.push(new Column(id, settings[id], this));
       }

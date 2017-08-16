@@ -19,8 +19,7 @@ export class ServerSourceConf {
   dataKey: string;
 
   constructor(
-    { endPoint = '', sortFieldKey = '', sortDirKey = '',
-      pagerPageKey = '', pagerLimitKey = '', filterFieldKey = '', totalKey = '', dataKey = '' } = {}) {
+    {endPoint = '', sortFieldKey = '', sortDirKey = '', pagerPageKey = '', pagerLimitKey = '', filterFieldKey = '', totalKey = '', dataKey = ''} = {}) {
 
     this.endPoint = endPoint ? endPoint : '';
 
