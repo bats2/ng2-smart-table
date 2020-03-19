@@ -143,5 +143,5 @@
     "webpack-dev-server": "webpack-dev-server"
   },
   "typings": "./ng2-smart-table.d.ts",
-  "version": "github:bats2/ng2-smart-table)"
+  "version": "github:bats2/ng2-smart-table"
 }
